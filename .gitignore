@@ -1,0 +1,144 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+# Keep package-lock.json for consistent installs (recommended)
+# package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+.next/
+out/
+.vite/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+.nyc_output/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+dump.sql
+*.dump
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+
+# Testing
+.coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Misc
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+.vercel
+.netlify
+
+# Mobile (React Native)
+# Uncomment if using React Native
+# ios/
+# android/
+# *.jks
+# *.keystore
+# .expo/
+# .expo-shared/
+
+# Telegram bot
+# Uncomment if you want to ignore bot token files
+# telegram_bot/.env
+# telegram_bot/config.json
+
+# Uploads and user-generated content
+uploads/
+backend/uploads/
+public/uploads/
+storage/
+*.upload
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Compiled files
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Note: package-lock.json is kept in the repo for consistent installs
+# If you prefer to ignore it, uncomment the line in the Dependencies section above
+
+    
