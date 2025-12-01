@@ -1,192 +1,196 @@
 # Free Hosting Guide for SimpleCRM
 
-This guide covers multiple free hosting options for your SimpleCRM application.
+This guide covers **working free hosting options** for your SimpleCRM application with MySQL/PostgreSQL support.
 
-## 🚀 Recommended: Railway (Easiest - Full Stack)
+## 🚀 Recommended Option 1: Render + PlanetScale (MySQL)
 
-Railway is the easiest option as it supports both backend and database, plus WebSockets.
+**Best for**: Keeping MySQL without conversion
 
-### Prerequisites
-- GitHub account
-- Railway account (free tier: $5 credit/month)
+### Backend on Render (Free Tier)
 
-### Steps
+1. Go to [render.com](https://render.com) and sign up with GitHub
+2. Click **"New"** → **"Web Service"**
+3. Connect your GitHub repository
+4. Configure:
+   - **Name**: `simplecrm-backend`
+   - **Root Directory**: `backend`
+   - **Environment**: `Node`
+   - **Build Command**: `npm install`
+   - **Start Command**: `npm start`
+5. Add environment variables (see below)
+6. **Note**: Free tier spins down after 15 min inactivity (first request may be slow)
 
-#### 1. Prepare Your Repository
-```bash
-# Make sure your code is pushed to GitHub
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/yourusername/simplecrm.git
-git push -u origin main
-```
+### Database: PlanetScale (MySQL - Free Tier)
 
-#### 2. Deploy Backend to Railway
-
-1. Go to [railway.app](https://railway.app) and sign up with GitHub
-2. Click "New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. Railway will auto-detect it's a Node.js app
-5. Add environment variables:
+1. Go to [planetscale.com](https://planetscale.com) and sign up
+2. Click **"Create database"**
+3. Choose **"Hobby"** plan (free)
+4. Create database: `simplecrm`
+5. Go to **"Connect"** → Copy connection details
+6. Update backend environment variables:
    ```
-   NODE_ENV=production
-   PORT=4000
-   JWT_SECRET=your-super-secret-jwt-key-here
-   DB_HOST=your-db-host
+   DB_HOST=<planetscale-host>
    DB_PORT=3306
-   DB_USER=your-db-user
-   DB_PASS=your-db-password
-   DB_NAME=simplecrm
-   GOOGLE_CLIENT_ID=your-google-client-id
-   GOOGLE_CLIENT_SECRET=your-google-client-secret
-   GOOGLE_AI_API_KEY=your-gemini-api-key
-   GEMINI_MODEL=gemini-2.5-flash
-   FRONTEND_URL=https://your-frontend-domain.vercel.app
+   DB_USER=<planetscale-user>
+   DB_PASS=<planetscale-password>
+   DB_NAME=<planetscale-database>
    ```
 
-#### 3. Add MySQL Database
+### Frontend on Vercel (Free)
 
-1. In Railway project, click "New" → "Database" → "MySQL"
-2. Railway will create a MySQL database
-3. Copy the connection details and update your backend environment variables:
-   ```
-   DB_HOST=<railway-provided-host>
-   DB_PORT=3306
-   DB_USER=<railway-provided-user>
-   DB_PASS=<railway-provided-password>
-   DB_NAME=railway
-   ```
-
-#### 4. Run Database Migrations
-
-1. In Railway, go to your backend service
-2. Click "Settings" → "Deploy" → "Add Deploy Command"
-3. Add: `npm install && node -e "require('child_process').execSync('mysql -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME < sql/schema.sql', {stdio: 'inherit'})" || npm start`
-4. Or manually run migrations via Railway's MySQL console
-
-#### 5. Deploy Frontend to Vercel
-
-1. Go to [vercel.com](https://vercel.com) and sign up with GitHub
-2. Click "New Project" → Import your repository
+1. Go to [vercel.com](https://vercel.com) and sign up
+2. Click **"New Project"** → Import repository
 3. Configure:
    - **Root Directory**: `frontend`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
 4. Add environment variables:
    ```
-   VITE_API_BASE=https://your-backend.railway.app/api
+   VITE_API_BASE=https://simplecrm-backend.onrender.com/api
+   VITE_SOCKET_URL=https://simplecrm-backend.onrender.com
    ```
-5. Update `frontend/src/components/Chatbot/ChatWidget.jsx` and `CollapsibleChatWidget.jsx`:
-   ```javascript
-   const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:4000/api';
-   const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:4000';
-   ```
-
-#### 6. Update CORS Settings
-
-In `backend/server.js`, update CORS:
-```javascript
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'https://your-app.vercel.app',
-  credentials: true
-}));
-```
 
 ---
 
-## 🎯 Alternative Option 1: Render (Free Tier)
+## 🎯 Recommended Option 2: Render + Render PostgreSQL
+
+**Best for**: Simple all-in-one solution (requires MySQL → PostgreSQL conversion)
 
 ### Backend on Render
 
-1. Go to [render.com](https://render.com) and sign up
-2. Click "New" → "Web Service"
-3. Connect GitHub repo
-4. Configure:
-   - **Name**: `simplecrm-backend`
-   - **Root Directory**: `backend`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
-   - **Environment**: `Node`
-5. Add environment variables (same as Railway)
-6. **Note**: Free tier spins down after 15 min inactivity
+Same as Option 1 above.
 
-### Database on Render
+### Database: Render PostgreSQL (Free Tier)
 
-1. Click "New" → "PostgreSQL" (or MySQL if available)
-2. Render provides connection string
-3. Update `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`
+1. In Render dashboard, click **"New"** → **"PostgreSQL"**
+2. Configure:
+   - **Name**: `simplecrm-db`
+   - **Database**: `simplecrm`
+   - **User**: Auto-generated
+3. Copy connection string from Render dashboard
+4. **Convert MySQL to PostgreSQL** (see conversion guide below)
 
 ### Frontend on Vercel
 
-Same as Railway option above.
+Same as Option 1 above.
 
 ---
 
-## 🎯 Alternative Option 2: Fly.io (Good for WebSockets)
+## 🔄 MySQL to PostgreSQL Conversion
 
-### Backend on Fly.io
+If using PostgreSQL, you need to convert your SQL files:
 
-1. Install Fly CLI: `curl -L https://fly.io/install.sh | sh`
-2. Sign up: `fly auth signup`
-3. Create `backend/fly.toml`:
-   ```toml
-   app = "simplecrm-backend"
-   primary_region = "iad"
+### Quick Conversion Steps
 
-   [build]
-     builder = "paketobuildpacks/builder:base"
-
-   [env]
-     PORT = "4000"
-     NODE_ENV = "production"
-
-   [[services]]
-     internal_port = 4000
-     protocol = "tcp"
-
-     [[services.ports]]
-       handlers = ["http", "tls"]
-       port = 80
-
-     [[services.ports]]
-       handlers = ["tls", "http"]
-       port = 443
+1. **Install conversion tool** (optional):
+   ```bash
+   npm install -g mysql-to-postgres
    ```
-4. Deploy: `cd backend && fly deploy`
-5. Set secrets: `fly secrets set JWT_SECRET=xxx DB_HOST=xxx ...`
 
-### Database on Fly.io
+2. **Manual conversion** (recommended):
+   - Replace `AUTO_INCREMENT` → `SERIAL` or `GENERATED ALWAYS AS IDENTITY`
+   - Replace `DATETIME` → `TIMESTAMP`
+   - Replace `TEXT` → Keep as `TEXT` (same)
+   - Replace `ENUM` → `VARCHAR` with CHECK constraint
+   - Remove backticks (PostgreSQL uses double quotes if needed)
+   - Replace `ON DUPLICATE KEY UPDATE` → `ON CONFLICT ... DO UPDATE`
 
-1. Create PostgreSQL: `fly postgres create`
-2. Attach to app: `fly postgres attach <db-name> -a simplecrm-backend`
+3. **Update backend code**:
+   - Change `mysql2` to `pg` (PostgreSQL driver)
+   - Update connection syntax
+   - Update query syntax (minor differences)
+
+### Alternative: Use PlanetScale (Keep MySQL)
+
+Easier option - PlanetScale is MySQL-compatible, so no conversion needed!
 
 ---
 
-## 🎯 Alternative Option 3: Vercel + Supabase
+## 🎯 Option 3: Fly.io (Full Stack - PostgreSQL)
+
+**Best for**: More control, better performance
+
+### Setup
+
+1. **Install Fly CLI**:
+   ```bash
+   curl -L https://fly.io/install.sh | sh
+   ```
+
+2. **Sign up**: `fly auth signup`
+
+3. **Create backend app**:
+   ```bash
+   cd backend
+   fly launch
+   ```
+
+4. **Create PostgreSQL database**:
+   ```bash
+   fly postgres create --name simplecrm-db
+   fly postgres attach simplecrm-db
+   ```
+
+5. **Set environment variables**:
+   ```bash
+   fly secrets set JWT_SECRET=your-secret
+   fly secrets set GOOGLE_AI_API_KEY=your-key
+   # Database vars are auto-set by attach command
+   ```
+
+6. **Deploy**:
+   ```bash
+   fly deploy
+   ```
 
 ### Frontend on Vercel
+
 Same as above.
 
-### Backend on Vercel (Serverless Functions)
+---
 
-**Note**: WebSockets won't work with serverless. You'll need to use a separate WebSocket service or modify the chat to use polling.
+## 🎯 Option 4: Supabase (PostgreSQL + Backend Hosting)
 
-1. Convert API routes to Vercel serverless functions
-2. Use Supabase for database (free tier available)
-3. For WebSocket, use a separate service like Ably (free tier) or Pusher
+**Best for**: Database + optional backend hosting
+
+### Database: Supabase (Free Tier)
+
+1. Go to [supabase.com](https://supabase.com) and sign up
+2. Create new project
+3. Get connection string from **Settings** → **Database**
+4. Use connection details in your backend
+
+### Backend: Render or Fly.io
+
+Deploy backend to Render or Fly.io, connect to Supabase database.
+
+### Frontend: Vercel
+
+Same as above.
 
 ---
 
-## 📋 Environment Variables Checklist
+## 🎯 Option 5: Neon (PostgreSQL - Serverless)
 
-### Backend (.env)
+**Best for**: Serverless PostgreSQL
+
+1. Go to [neon.tech](https://neon.tech) and sign up
+2. Create project
+3. Get connection string
+4. Use with Render/Fly.io backend
+
+---
+
+## 📋 Environment Variables
+
+### Backend (Render/Fly.io)
+
 ```env
 NODE_ENV=production
 PORT=4000
 JWT_SECRET=your-super-secret-jwt-key-min-32-chars
 DB_HOST=your-database-host
-DB_PORT=3306
+DB_PORT=3306  # or 5432 for PostgreSQL
 DB_USER=your-database-user
 DB_PASS=your-database-password
 DB_NAME=your-database-name
@@ -194,157 +198,198 @@ GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
 GOOGLE_AI_API_KEY=your-gemini-api-key
 GEMINI_MODEL=gemini-2.5-flash
-FRONTEND_URL=https://your-frontend-domain.vercel.app
+FRONTEND_URL=https://your-frontend.vercel.app
 ```
 
-### Frontend (.env)
+### Frontend (Vercel)
+
 ```env
-VITE_API_BASE=https://your-backend.railway.app/api
-VITE_SOCKET_URL=https://your-backend.railway.app
+VITE_API_BASE=https://your-backend.onrender.com/api
+VITE_SOCKET_URL=https://your-backend.onrender.com
 ```
 
 ---
 
-## 🔧 Post-Deployment Steps
+## 🔧 Database Setup Steps
 
-### 1. Run Database Migrations
+### For PlanetScale (MySQL)
 
-After deploying, run your SQL migrations:
-```bash
-# Option 1: Via Railway/Render console
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME < sql/schema.sql
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME < sql/multi_tenant_schema.sql
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME < sql/chatbot_schema.sql
+1. **Run migrations via PlanetScale console**:
+   - Go to PlanetScale dashboard
+   - Click on your database
+   - Go to **"Console"** tab
+   - Copy and paste SQL from:
+     - `sql/schema.sql`
+     - `sql/multi_tenant_schema.sql`
+     - `sql/chatbot_schema.sql`
 
-# Option 2: Via Railway/Render MySQL console (web interface)
-# Copy and paste SQL files content
-```
+2. **Seed data**:
+   - Same console, paste:
+     - `sql/seed_data.sql`
+     - `sql/seed_users.sql`
 
-### 2. Seed Initial Data
+### For Render PostgreSQL
 
-```bash
-# Run seed scripts via database console
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME < sql/seed_data.sql
-mysql -h $DB_HOST -u $DB_USER -p$DB_PASS $DB_NAME < sql/seed_users.sql
-```
+1. **Connect via psql**:
+   ```bash
+   psql "postgresql://user:pass@host:5432/dbname"
+   ```
 
-### 3. Update Frontend API URLs
+2. **Run migrations**:
+   ```sql
+   \i sql/schema.sql
+   \i sql/multi_tenant_schema.sql
+   \i sql/chatbot_schema.sql
+   ```
 
-Make sure all API calls use environment variables:
-- Check `frontend/src/components/Chatbot/ChatWidget.jsx`
-- Check `frontend/src/components/Chatbot/CollapsibleChatWidget.jsx`
-- Check all API calls in pages
-
-### 4. Test WebSocket Connection
-
-1. Open browser console
-2. Check for WebSocket connection errors
-3. Test chat functionality
+3. **Or use Render's database console** (web interface)
 
 ---
 
-## 🆓 Free Tier Limits
+## 🆓 Free Tier Limits Comparison
 
-### Railway
-- $5 credit/month (usually enough for small apps)
-- 500 hours compute time
-- 5GB database storage
-
-### Render
-- Free tier spins down after 15 min inactivity
-- 750 hours/month
-- 1GB database storage
-
-### Vercel
-- Unlimited deployments
-- 100GB bandwidth/month
-- Serverless functions: 100GB-hours/month
-
-### Fly.io
-- 3 shared-cpu VMs
-- 3GB persistent volume storage
-- 160GB outbound data transfer
+| Platform | Database | Free Tier Limits |
+|----------|----------|------------------|
+| **PlanetScale** | MySQL | 1 database, 1GB storage, 1B rows/month |
+| **Render** | PostgreSQL | 90 days free, then $7/month, 1GB storage |
+| **Supabase** | PostgreSQL | 500MB database, 2GB bandwidth |
+| **Neon** | PostgreSQL | 0.5GB storage, unlimited projects |
+| **Fly.io** | PostgreSQL | 3GB storage, 3 VMs |
 
 ---
 
-## 🐛 Common Issues & Solutions
+## 🚀 Quick Start: Render + PlanetScale (Recommended)
 
-### Issue: WebSocket not connecting
-**Solution**: Ensure your hosting provider supports WebSockets (Railway, Render, Fly.io do). Vercel serverless doesn't support WebSockets.
+### Step 1: Set up PlanetScale Database
+
+1. Sign up at [planetscale.com](https://planetscale.com)
+2. Create database: `simplecrm`
+3. Copy connection details
+
+### Step 2: Deploy Backend to Render
+
+1. Sign up at [render.com](https://render.com)
+2. New → Web Service → Connect GitHub
+3. Configure:
+   - Root: `backend`
+   - Build: `npm install`
+   - Start: `npm start`
+4. Add environment variables (use PlanetScale connection details)
+
+### Step 3: Deploy Frontend to Vercel
+
+1. Sign up at [vercel.com](https://vercel.com)
+2. New Project → Import repo
+3. Root: `frontend`
+4. Add env vars with Render backend URL
+
+### Step 4: Run Migrations
+
+1. Go to PlanetScale dashboard → Console
+2. Paste SQL from `sql/schema.sql`
+3. Repeat for other SQL files
+
+### Step 5: Test
+
+1. Visit your Vercel frontend URL
+2. Test login, API calls, WebSocket
+
+---
+
+## 🔄 Converting to PostgreSQL (If Needed)
+
+If you choose PostgreSQL instead of PlanetScale, create a conversion script:
+
+### Update `backend/db.js` for PostgreSQL:
+
+```javascript
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 5432,
+  user: process.env.DB_USER || 'postgres',
+  password: process.env.DB_PASS || 'postgres',
+  database: process.env.DB_NAME || 'simplecrm',
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+});
+
+module.exports = pool;
+```
+
+### Update `package.json`:
+
+```json
+"dependencies": {
+  "pg": "^8.11.0"  // Instead of mysql2
+}
+```
+
+### SQL Conversion Examples:
+
+**MySQL:**
+```sql
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) UNIQUE,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**PostgreSQL:**
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+---
+
+## 🐛 Common Issues
+
+### Issue: Render free tier spins down
+**Solution**: First request after 15 min may be slow. Consider upgrading or using Fly.io.
+
+### Issue: PlanetScale connection limits
+**Solution**: Free tier has connection limits. Use connection pooling.
+
+### Issue: WebSocket not working
+**Solution**: Ensure your hosting supports WebSockets (Render, Fly.io do. Vercel serverless doesn't).
 
 ### Issue: CORS errors
-**Solution**: Update `FRONTEND_URL` in backend environment variables to match your frontend domain.
-
-### Issue: Database connection fails
-**Solution**: 
-- Check database credentials
-- Ensure database is accessible from your backend (not localhost-only)
-- Verify firewall rules allow connections
-
-### Issue: Environment variables not loading
-**Solution**: 
-- Restart your backend service after adding env vars
-- Check variable names match exactly (case-sensitive)
-- Verify `.env` file is not committed (should be in `.gitignore`)
+**Solution**: Update `FRONTEND_URL` in backend environment variables.
 
 ---
 
-## 📝 Quick Start Commands
+## ✅ Recommended Setup
 
-```bash
-# 1. Initialize Git (if not done)
-git init
-git add .
-git commit -m "Initial commit"
-
-# 2. Push to GitHub
-git remote add origin https://github.com/yourusername/simplecrm.git
-git push -u origin main
-
-# 3. Deploy backend to Railway
-# - Go to railway.app, connect repo, deploy
-
-# 4. Deploy frontend to Vercel
-# - Go to vercel.com, connect repo, set root to 'frontend'
-
-# 5. Update environment variables in both platforms
-# 6. Run database migrations
-# 7. Test the application
-```
-
----
-
-## 🎉 Recommended Setup
-
-**Best for beginners**: Railway (backend + DB) + Vercel (frontend)
+**For beginners**: **Render (backend) + PlanetScale (MySQL) + Vercel (frontend)**
 - Easiest setup
-- Good free tier
+- No MySQL conversion needed
+- All free tiers
 - Supports WebSockets
-- Automatic deployments from GitHub
 
-**Best for production**: Fly.io (backend + DB) + Vercel (frontend)
+**For production**: **Fly.io (backend + PostgreSQL) + Vercel (frontend)**
 - Better performance
 - More control
 - Better for scaling
 
 ---
 
-## 📚 Additional Resources
+## 📚 Resources
 
-- [Railway Docs](https://docs.railway.app)
-- [Vercel Docs](https://vercel.com/docs)
 - [Render Docs](https://render.com/docs)
+- [PlanetScale Docs](https://planetscale.com/docs)
+- [Vercel Docs](https://vercel.com/docs)
 - [Fly.io Docs](https://fly.io/docs)
+- [Supabase Docs](https://supabase.com/docs)
 
 ---
 
-## ⚠️ Important Notes
+## 🎉 Summary
 
-1. **Free tiers have limits** - Monitor usage to avoid unexpected charges
-2. **Database backups** - Set up regular backups (most platforms offer this)
-3. **Environment variables** - Never commit `.env` files to Git
-4. **SSL/HTTPS** - All platforms provide free SSL certificates
-5. **Custom domains** - Most platforms allow custom domains (some free, some paid)
+**Easiest path**: Use **PlanetScale for MySQL** (no conversion needed) + **Render for backend** + **Vercel for frontend**. All have generous free tiers and work well together!
 
 Good luck with your deployment! 🚀
-
